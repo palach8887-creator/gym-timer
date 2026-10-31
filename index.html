@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<meta name="description" content="Таймер отдыха, подсчёт подходов и история тренировок за неделю.">
+<link rel="manifest" href="./manifest.json">
+<title>Gym Timer — таймер тренировок</title>
+<style>
+:root{color-scheme:dark;--bg:#111318;--panel:#1a1d24;--panel2:#222630;--line:#303541;--text:#f5f6f8;--muted:#a5adbb;--accent:#c8f169;--accentText:#1b2410;--danger:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer;touch-action:manipulation}button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.app{max-width:560px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom));min-height:100dvh}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}.brand{font-size:20px;font-weight:850;letter-spacing:.08em}.sub{color:var(--muted);font-size:13px}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:13px}.eyebrow{font-size:11px;letter-spacing:.11em;font-weight:750;color:var(--muted)}.total{font-size:clamp(46px,13vw,68px);font-weight:800;letter-spacing:-.055em;line-height:1.15;margin:8px 0 14px;font-variant-numeric:tabular-nums}.rest-clock{font-size:clamp(54px,15vw,78px);font-weight:850;letter-spacing:-.055em;font-variant-numeric:tabular-nums;line-height:1.1;margin:8px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:var(--panel2);border-radius:16px;padding:14px}.stat-num{font-size:28px;font-weight:800;letter-spacing:-.03em}.muted{color:var(--muted)}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:15px;padding:14px 13px;font-weight:750;width:100%;min-height:50px}.btn.primary{background:var(--accent);color:var(--accentText);border-color:transparent}.btn:disabled{opacity:.36;cursor:default}.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.btnrow.single{grid-template-columns:1fr}.progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin:15px 0 5px}.progress>div{height:100%;background:var(--accent);width:0;transition:width .2s linear}.settings{display:flex;align-items:center;justify-content:space-between;gap:10px}.stepper{display:flex;align-items:center;gap:12px}.stepper button{width:40px;height:40px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;font-size:22px}.stepval{font-weight:800;min-width:52px;text-align:center}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:15px;margin:20px 0 13px}.tab{border:0;border-radius:11px;background:transparent;color:var(--muted);padding:11px;font-weight:750}.tab[aria-selected=true]{background:var(--panel2);color:var(--text)}.section-title{font-size:19px;font-weight:800;margin:0 0 12px}.weekgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:12px 0}.day{background:var(--panel2);border-radius:12px;padding:9px 2px;text-align:center;min-height:66px}.day.today{outline:1px solid var(--accent)}.day .dayname{font-size:10px;color:var(--muted)}.day .daycount{font-weight:800;font-size:15px;margin-top:5px}.history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding:13px 0}.history-item:first-child{border-top:0}.history-name{font-weight:750}.history-meta{font-size:12px;color:var(--muted);margin-top:3px}.delete{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px 10px}.empty{padding:24px 8px;text-align:center;color:var(--muted)}.notice{font-size:12px;color:var(--muted);margin:12px 2px 0}.hidden{display:none!important}.finish-banner{padding:12px;border-radius:13px;background:#29351d;color:var(--accent);font-size:13px;margin-top:12px}
+@media(min-width:500px){.app{padding-top:26px}.panel{padding:20px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header><div><div class="brand">GYM TIMER</div><div class="sub">Меньше считать — больше тренироваться</div></div><span class="pill" id="status">Готов к старту</span></header>
+
+<section id="training-view">
+  <div class="panel">
+    <div class="eyebrow">ОБЩЕЕ ВРЕМЯ ТРЕНИРОВКИ</div>
+    <div class="total" id="total-time">00:00:00</div>
+    <div class="btnrow single"><button class="btn primary" id="start-btn">▶ Начать тренировку</button></div>
+  </div>
+  <div class="grid">
+    <div class="stat"><div class="eyebrow">ПОДХОДЫ</div><div class="stat-num" id="set-count">0</div><div class="muted" style="font-size:12px">засчитано</div></div>
+    <div class="stat"><div class="eyebrow">ОТДЫХ</div><div class="stat-num" id="rest-small">03:00</div><div class="muted" id="rest-caption" style="font-size:12px">между подходами</div></div>
+  </div>
+  <div class="panel" style="margin-top:13px">
+    <div class="eyebrow">ТАЙМЕР ОТДЫХА</div>
+    <div class="rest-clock" id="rest-time">03:00</div>
+    <div class="muted" id="rest-message">Отдых начнётся после завершения подхода</div>
+    <div class="progress"><div id="rest-progress"></div></div>
+    <div class="btnrow">
+      <button class="btn primary" id="done-btn" disabled>✓ Подход выполнен</button>
+      <button class="btn" id="next-btn" disabled>Начать подход</button>
+    </div>
+    <div class="finish-banner hidden" id="rest-over">Время отдыха вышло — пора за следующий подход.</div>
+  </div>
+  <div class="panel">
+    <div class="settings"><div><div style="font-weight:750">Длительность отдыха</div><div class="muted" style="font-size:12px">Шаг изменения — 15 секунд</div></div><div class="stepper"><button id="minus-btn" aria-label="Уменьшить отдых">−</button><div class="stepval" id="rest-setting">3:00</div><button id="plus-btn" aria-label="Увеличить отдых">+</button></div></div>
+    <div class="btnrow single" style="margin-top:18px"><button class="btn" id="finish-btn" disabled>Завершить и сохранить тренировку</button></div>
+    <div class="notice">Звуковые сигналы выключены. Таймер использует время системы, чтобы точнее пересчитывать отсчёт после переключения вкладки.</div>
+  </div>
+</section>
+
+<section id="history-view" class="hidden">
+  <div class="panel">
+    <h2 class="section-title">Твоя неделя</h2><div class="muted" id="week-range" style="font-size:13px"></div>
+    <div class="weekgrid" id="week-grid"></div>
+    <div class="grid">
+      <div class="stat"><div class="eyebrow">ТРЕНИРОВКИ</div><div class="stat-num" id="week-sessions">0</div><div class="muted" style="font-size:12px">за 7 дней</div></div>
+      <div class="stat"><div class="eyebrow">ПОДХОДЫ</div><div class="stat-num" id="week-sets">0</div><div class="muted" style="font-size:12px">за 7 дней</div></div>
+      <div class="stat"><div class="eyebrow">ВРЕМЯ В ЗАЛЕ</div><div class="stat-num" id="week-time">0 мин</div><div class="muted" style="font-size:12px">за 7 дней</div></div>
+      <div class="stat"><div class="eyebrow">СРЕДНЯЯ СЕССИЯ</div><div class="stat-num" id="week-avg">0 мин</div><div class="muted" style="font-size:12px">на тренировку</div></div>
+    </div>
+  </div>
+  <div class="panel"><h2 class="section-title">История тренировок</h2><div id="history-list"></div><div class="notice">Данные хранятся локально на этом устройстве в браузере. Очистка данных браузера может удалить историю.</div></div>
+</section>
+
+<nav class="tabs" aria-label="Разделы"><button class="tab" id="tab-training" aria-selected="true">⏱ Тренировка</button><button class="tab" id="tab-history" aria-selected="false">▤ История</button></nav>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const STORE='gymTimerSessions_v1';
+let sessions=loadSessions(),active=false,resting=false,startAt=0,elapsedBefore=0,sets=0,restStart=0,restDuration=180000,restBefore=0,finishedAt=null,raf=null;
+function loadSessions(){try{const v=JSON.parse(localStorage.getItem(STORE)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
+function saveSessions(){try{localStorage.setItem(STORE,JSON.stringify(sessions));return true}catch(e){alert('Не удалось сохранить историю. Проверь доступное место в браузере.');return false}}
+function elapsed(){return elapsedBefore+(active?Date.now()-startAt:0)}
+function restElapsed(){return restBefore+(resting?Date.now()-restStart:0)}
+function pad(n){return String(n).padStart(2,'0')}
+function clock(ms,hours=true){let s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return hours?`${pad(h)}:${pad(m)}:${pad(ss)}`:`${pad(Math.floor(s/60))}:${pad(ss)}`}
+function mins(ms){return Math.round(ms/60000)}
+function fmtDate(iso){return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',year:'numeric'}).format(new Date(iso))}
+function dayKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function render(){
+  const total=elapsed(),re=restElapsed(),left=Math.max(0,restDuration-re);
+  $('total-time').textContent=clock(total);$('set-count').textContent=sets;
+  $('rest-time').textContent=clock(resting?left:restDuration,false);$('rest-small').textContent=clock(restDuration,false);
+  $('rest-setting').textContent=clock(restDuration,false);
+  $('status').textContent=!active?(finishedAt?'Завершена':'Готов к старту'):(resting?(left===0?'Отдых завершён':'Время отдыха'):'Тренировка идёт');
+  $('start-btn').disabled=active;$('start-btn').textContent=finishedAt?'Тренировка сохранена':'▶ Начать тренировку';
+  $('done-btn').disabled=!active||resting;$('next-btn').disabled=!active||!resting;
+  $('minus-btn').disabled=!active||resting;$('plus-btn').disabled=!active||resting;
+  $('finish-btn').disabled=!active;
+  $('rest-message').textContent=resting?(left===0?'Отдых завершён. Пора продолжать!':'Отдыхай — общий таймер продолжает идти.'):active?'Выполняй подход. Когда закончишь, нажми кнопку ниже.':'Отдых начнётся после завершения подхода';
+  $('rest-progress').style.width=resting?Math.min(100,re/restDuration*100)+'%':'0%';
+  $('rest-over').classList.toggle('hidden',!(resting&&left===0));
+}
+function start(){if(active)return;if(finishedAt){sets=0;finishedAt=null;restBefore=0;restStart=0;resting=false;$('rest-message').textContent='Выполняй подход. Когда закончишь, нажми кнопку ниже.';}active=true;startAt=Date.now();$('start-btn').textContent='▶ Тренировка идёт';render();raf=setInterval(render,250)}
+function markDone(){if(!active||resting)return;sets++;resting=true;restBefore=0;restStart=Date.now();render()}
+function startSet(){if(!active||!resting)return;restBefore=restElapsed();resting=false;render()}
+function finish(){
+ if(!active)return;
+ const duration=elapsed(),end=new Date(),start=new Date(end.getTime()-duration);
+ active=false;resting=false;finishedAt=end.toISOString();
+ const entry={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:end.toISOString(),start:start.toISOString(),durationMs:duration,sets};
+ sessions.unshift(entry);saveSessions();clearInterval(raf);raf=null;elapsedBefore=0;render();renderHistory();
+ $('start-btn').textContent='▶ Начать новую тренировку';
+ $('rest-message').textContent='Тренировка сохранена в истории.';$('rest-over').classList.add('hidden');
+}
+function reset(){
+ if(active&&!confirm('Завершить тренировку без сохранения?'))return;
+ active=false;resting=false;clearInterval(raf);raf=null;startAt=0;elapsedBefore=0;sets=0;restBefore=0;restStart=0;finishedAt=null;
+ $('rest-message').textContent='Отдых начнётся после завершения подхода';$('start-btn').textContent='▶ Начать тренировку';render();
+}
+function renderHistory(){
+ const now=new Date(),days=[];
+ for(let i=6;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);days.push(d)}
+ const from=new Date(days[0].getFullYear(),days[0].getMonth(),days[0].getDate()).getTime();
+ const week=sessions.filter(s=>new Date(s.date).getTime()>=from&&new Date(s.date).getTime()<=now.getTime()+86400000);
+ $('week-range').textContent=days[0].toLocaleDateString('ru-RU',{day:'numeric',month:'short'})+' — '+now.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+ $('week-grid').innerHTML=days.map(d=>{const k=dayKey(d),n=week.filter(s=>dayKey(new Date(s.date))===k).length;return `<div class="day ${k===dayKey(now)?'today':''}"><div class="dayname">${d.toLocaleDateString('ru-RU',{weekday:'short'}).replace('.','')}</div><div class="daycount">${n?`×${n}`:'—'}</div></div>`}).join('');
+ const sum=week.reduce((a,s)=>a+s.durationMs,0),setSum=week.reduce((a,s)=>a+s.sets,0);
+ $('week-sessions').textContent=week.length;$('week-sets').textContent=setSum;$('week-time').textContent=mins(sum)+' мин';$('week-avg').textContent=(week.length?Math.round(sum/week.length/60000):0)+' мин';
+ const list=$('history-list');
+ if(!sessions.length){list.innerHTML='<div class="empty">Пока нет сохранённых тренировок.<br>Заверши первую тренировку — она появится здесь.</div>';return}
+ list.innerHTML=sessions.slice(0,50).map(s=>`<div class="history-item"><div><div class="history-name">${fmtDate(s.date)}</div><div class="history-meta">${new Date(s.date).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · ${clock(s.durationMs)} · ${s.sets} подходов</div></div><button class="delete" data-delete="${s.id}" aria-label="Удалить тренировку">Удалить</button></div>`).join('');
+ list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Удалить эту тренировку из истории?')){sessions=sessions.filter(s=>s.id!==b.dataset.delete);saveSessions();renderHistory()}}));
+}
+function show(view){
+ const history=view==='history';$('training-view').classList.toggle('hidden',history);$('history-view').classList.toggle('hidden',!history);
+ $('tab-training').setAttribute('aria-selected',String(!history));$('tab-history').setAttribute('aria-selected',String(history));if(history)renderHistory();
+}
+$('start-btn').addEventListener('click',start);$('done-btn').addEventListener('click',markDone);$('next-btn').addEventListener('click',startSet);$('finish-btn').addEventListener('click',finish);
+$('minus-btn').addEventListener('click',()=>{restDuration=Math.max(15000,restDuration-15000);render()});
+$('plus-btn').addEventListener('click',()=>{restDuration=Math.min(900000,restDuration+15000);render()});
+$('tab-training').addEventListener('click',()=>show('training'));$('tab-history').addEventListener('click',()=>show('history'));
+$('finish-btn').insertAdjacentHTML('afterend','<button class="btn" id="reset-btn" style="margin-top:10px">Сбросить без сохранения</button>');
+$('reset-btn').addEventListener('click',reset);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+render();renderHistory();
+})();
+</script>
+</body>
+</html>
